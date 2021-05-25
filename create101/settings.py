@@ -39,7 +39,19 @@ INSTALLED_APPS = [
     'django.contrib.messages',
     'django.contrib.staticfiles',
     'corsheaders',
+    'allauth',                                          # 소셜 로그인을 위한 추가
+    'allauth.account',                                  # 소셜 로그인을 위한 추가
+    'allauth.socialaccount',                            # 소셜 로그인을 위한 추가
+    'django.contrib.sites',                             # 소셜 로그인을 위한 추가
+    'allauth.socialaccount.providers.kakao',            # 소셜 로그인을 위한 추가
 ]
+
+AUTHENTICATION_BACKENDS = [
+    'django.contrib.auth.backends.ModelBackend',            # 소셜 로그인을 위한 추가 / 장고의 로그인 방식 
+    'allauth.account.auth_backends.AuthenticationBackend',  # 소셜 로그인을 위한 추가 / all auth 의 로그인 방식 
+]
+
+SITE_ID = 1
 
 MIDDLEWARE = [
     'django.middleware.security.SecurityMiddleware',
