@@ -30,6 +30,7 @@ class UserCoupon(models.Model):
 class Comment(models.Model):
     review = models.ForeignKey('courses.Review', on_delete=models.CASCADE)
     user   = models.ForeignKey('User', on_delete=models.CASCADE, related_name='comments')
+    text   = models.TextField(default=None)
 
     class Meta:
         db_table = 'comments'
