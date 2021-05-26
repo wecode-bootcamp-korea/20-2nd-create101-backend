@@ -3,8 +3,8 @@ from django.db import models
 class User(models.Model):
     email       = models.CharField(max_length=128)
     korean_name = models.CharField(max_length=64)
-    password    = models.CharField(max_length=64)
-    first_login = models.BooleanField(default=True)
+    password    = models.CharField(max_length=64, default="")
+    kakao_id    = models.IntegerField(default=None)
     coupon      = models.ManyToManyField('Coupon', through='UserCoupon', related_name='users')
     comment     = models.ManyToManyField('courses.Review', through='Comment', related_name='reviewer')
     like        = models.ManyToManyField('courses.Course', through='Like', related_name='liked_user')
