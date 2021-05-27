@@ -4,7 +4,7 @@ class User(models.Model):
     email       = models.CharField(max_length=128)
     korean_name = models.CharField(max_length=64)
     password    = models.CharField(max_length=64, default="")
-    kakao_id    = models.IntegerField(default=None)
+    kakao_id    = models.IntegerField(default=None, null=True)
     coupon      = models.ManyToManyField('Coupon', through='UserCoupon', related_name='users')
     comment     = models.ManyToManyField('courses.Review', through='Comment', related_name='reviewer')
     like        = models.ManyToManyField('courses.Course', through='Like', related_name='liked_user')
