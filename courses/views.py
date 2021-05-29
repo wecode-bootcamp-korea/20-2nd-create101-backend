@@ -1,17 +1,29 @@
+<<<<<<< HEAD
 import json, random, boto3
 from uuid                  import uuid4
+=======
+import json
+>>>>>>> 827fdcf... ADD: CourseReviewView
 
 from django.views          import View
 from django.http           import JsonResponse
 from django.db.models      import Count, Q
 from django.core.paginator import Paginator, EmptyPage
 
+<<<<<<< HEAD
 from create101.settings    import AWS_ACCESS_KEY_ID, AWS_SECRET_ACCESS_KEY
 from my_settings           import AWS_URL, SAMPLE_IMAGES
 from courses.models        import Category, Course, SubCategory, Review
 from users.models          import User, Like, Comment
 from courses.utils         import get_user
 from decorator             import validate_login
+=======
+from decorator             import validate_login
+from my_settings           import SECRET_KEY, ALGORITHM
+from courses.utils         import get_user
+from courses.models        import Course, Category, SubCategory, Review
+from users.models          import Like, Comment, User
+>>>>>>> 827fdcf... ADD: CourseReviewView
 
 class CategoryView(View):
     def get(self, request):
@@ -28,7 +40,6 @@ class CategoryView(View):
 class CourseDetailView(View):
     def get(self, request, id):
         try:
-            user            = get_user(request)
             course          = Course.objects.get(id=id)
             course_like     = Like.objects.filter(course_id=id)
             course_review   = Review.objects.filter(course_id=id)
@@ -43,7 +54,6 @@ class CourseDetailView(View):
                 "counts_like"   : course_like.count(),
                 "target"        : course.target.name,
                 "month"         : course.month,
-                'liked'         : user in course.liked_user.all(),
                 "review"        : [{
                     'id'     : review.id,
                     'text'   : review.text,
@@ -53,7 +63,7 @@ class CourseDetailView(View):
                     'text'       : comment.text,
                     'user_id'  : comment.user_id,
                     'review_id': comment.review_id
-                } for comment in review_comments] 
+                } for comment in review_comments]
             }        
             return JsonResponse({'status': "SUCCESS", 'data': {'course':course_info}}, status=200)
         except Course.DoesNotExist:
@@ -99,6 +109,9 @@ class CourseListView(View):
                     course_list = course_list.annotate(review_count = Count('course_review')) 
                 ordered_course_list = course_list.order_by(my_dict[sort_name])
                 course_list         = ordered_course_list
+                if sort_name == 'reviewest':
+                    course_list = course_list.annotate(review_count = Count('review')) 
+                course_list.order_by(my_dict[sort_name])
             else:
                 return JsonResponse({'message' : 'INVALID_VALUE'}, status=404)
         
@@ -165,3 +178,30 @@ class CourseRegisterView(View):
             return JsonResponse({"message": "SUCCESS"}, status=200)
         except KeyError:
             return JsonResponse({"message": "INVALID_KEYS"}, status=400)
+class CourseReviewView(View):
+    @validate_login
+    def post(self, request, course_id):
+        try:
+            data = json.loads(request.body)
+            review = Review.objects.create(
+                course = Course.objects.get(id=course_id),
+                user   = request.account.id,
+                text   = data["text"]
+            )
+            return JsonResponse({"status": "SUCCESS", "review_id": review.id}, status=200)
+        except KeyError:
+            return JsonResponse({"message": "INVALID KEYS"}, status=400)
+
+class CourseCommentView(View):
+    @validate_login
+    def post(self, request, review_id):
+        try:
+            data = json.loads(request.body)
+            comment = Comment.objects.create(
+                review = Review.objects.get(id=review_id),
+                user   = request.account.id,
+                text   = data["text"]
+            )
+            return JsonResponse({"status": "SUCCESS", "comment_id": comment.id}, status=200) 
+        except KeyError:
+            return JsonResponse({"message": "INVALID KEYS"}, status=400)
