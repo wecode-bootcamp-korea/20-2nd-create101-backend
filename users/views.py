@@ -1,10 +1,9 @@
-import jwt
-import requests
+import jwt, requests
 
-from datetime         import datetime
 from django.http      import JsonResponse
 from django.views     import View
 
+from datetime         import datetime
 from my_settings      import SECRET_KEY, ALGORITHM
 from users.models     import User, Coupon
 
