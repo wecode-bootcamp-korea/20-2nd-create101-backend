@@ -1,5 +1,3 @@
-import json
-
 from django.test     import TestCase, Client
 
 from courses.models  import Category, SubCategory, Course, Review, Target
@@ -21,7 +19,6 @@ class CategoryTest(TestCase):
             name     = 'test_sub_category2',
             category = category
         )
-
 
     def tearDown(self):
         Category.objects.all().delete()
@@ -49,6 +46,7 @@ class CategoryTest(TestCase):
             ]
         })
         self.assertEqual(response.status_code, 200)
+        
 class CourseDetailViewTest(TestCase):
     def setUp(self):
         User.objects.create(
@@ -138,3 +136,211 @@ class CourseDetailViewTest(TestCase):
             {"status": "COURSE_NOT_FOUND", "message": "존재하지 않는 클래스입니다."}
         )
         self.assertEqual(response.status_code, 404)
+
+
+class CourseListViewTest(TestCase):
+    def setUp(self):
+        User.objects.create(
+            id          = 1,
+            email       = 'user1@wecode.com',
+            korean_name = 'user1'
+        )
+        Category.objects.create(id=1, name='category1')
+        category = Category.objects.create(id=2, name='category2')
+        SubCategory.objects.create(
+            id       = 1,
+            name     = 'sub_category1',
+            category = category)
+        SubCategory.objects.create(
+            id       = 2,
+            name     = 'sub_category2',
+            category = category)
+        Target.objects.create(
+            id   = 1,
+            name = 'target1'
+        )
+        Course.objects.create(
+            id           = 1,
+            title        = 'course1',
+            sub_category = SubCategory.objects.get(id=1),
+            user         = User.objects.get(id=1),
+            price        = 1.00,
+            thumbnail    = 'null',
+            month        = 1,
+            description  = 'description',
+            target       = Target.objects.get(id=1)
+        )
+        Course.objects.create(
+            id           = 2,
+            title        = 'course2',
+            sub_category = SubCategory.objects.get(id=2),
+            user         = User.objects.get(id=1),
+            price        = 1.00,
+            thumbnail    = 'null',
+            month        = 1,
+            description  = 'description',
+            target       = Target.objects.get(id=1)
+        )
+        Review.objects.create(
+            course = Course.objects.get(id=1),
+            user   = User.objects.get(id=1),
+            text   = 'review'
+        )
+        Like.objects.create(
+            course = Course.objects.get(id=1),
+            user   = User.objects.get(id=1)
+        )
+    
+    def tearDown(self):
+        Category.objects.all().delete()
+        SubCategory.objects.all().delete()
+        Target.objects.all().delete()
+        Review.objects.all().delete()
+        Like.objects.all().delete()
+        User.objects.all().delete()
+
+    def test_list_by_category_success(self):
+        client   = Client()
+        response = client.get('/courses?category=2')
+        self.assertEqual(response.status_code, 200)
+        self.assertEqual(response.json(), {
+            'courses': [
+                    {
+                        'id'          : 1,
+                        'title'       : 'course1',
+                        'sub_category': 'sub_category1',
+                        'user'        : 'user1',
+                        'like'        : 1,
+                        'price'       : '1.00',
+                        'thumbnail'   : 'null',
+                        'month'       : 1,
+                        'liked'       : False,
+                    },
+                    {
+                        'id'          : 2,
+                        'title'       : 'course2',
+                        'sub_category': 'sub_category2',
+                        'user'        : 'user1',
+                        'like'        : 0,
+                        'price'       : '1.00',
+                        'thumbnail'   : 'null',
+                        'month'       : 1,
+                        'liked'       : False,
+                    }],
+                'page_list': []
+        })
+
+    def test_list_by_category_invalid_value(self):
+        client   = Client()
+        response = client.get('/courses?category=3')
+        self.assertEqual(response.status_code, 404)
+        self.assertEqual(response.json(), {
+            'message' : 'INVALID_VALUE'
+        })
+
+    def test_list_by_sub_category_success(self):
+        client   = Client()
+        response = client.get('/courses?sub_category=2')
+        self.assertEqual(response.status_code, 200)
+        self.assertEqual(response.json(), {
+            'courses': [
+                    {
+                        'id'          : 2,
+                        'title'       : 'course2',
+                        'sub_category': 'sub_category2',
+                        'user'        : 'user1',
+                        'like'        : 0,
+                        'price'       : '1.00',
+                        'thumbnail'   : 'null',
+                        'month'       : 1,
+                        'liked'       : False,
+                    }],
+                'page_list': []
+        })
+
+    def test_list_by_sub_category_invalid_value(self):
+        client   = Client()
+        response = client.get('/courses?sub_category=5')
+        self.assertEqual(response.status_code, 404)
+        self.assertEqual(response.json(), {
+            'message' : 'INVALID_VALUE'
+        })
+        
+
+    def test_sorted_list_success(self):
+        client     = Client()
+        response   = client.get('/courses?sort=likes')
+        self.assertEqual(response.json(), {
+            'courses': [
+                    {
+                        'id'          : 1,
+                        'title'       : 'course1',
+                        'sub_category': 'sub_category1',
+                        'user'        : 'user1',
+                        'like'        : 1,
+                        'price'       : '1.00',
+                        'thumbnail'   : 'null',
+                        'month'       : 1,
+                        'liked'       : False,
+                    },
+                    {
+                        'id'          : 2,
+                        'title'       : 'course2',
+                        'sub_category': 'sub_category2',
+                        'user'        : 'user1',
+                        'like'        : 0,
+                        'price'       : '1.00',
+                        'thumbnail'   : 'null',
+                        'month'       : 1,
+                        'liked'       : False,
+                    }],
+                'page_list': []
+        })
+        self.assertEqual(response.status_code, 200)
+    
+    def test_sorted_list_invalid_value(self):
+        client   = Client()
+        response = client.get('/courses?sort=invalid')
+        self.assertEqual(response.status_code, 404)
+        self.assertEqual(response.json(), {
+            'message' : 'INVALID_VALUE'
+        })
+
+    def test_pagination_success(self):
+        client   = Client()
+        response = client.get('/courses?page=1')
+        self.assertEqual(response.status_code, 200)
+        self.assertEqual(response.json(), {
+            'courses': [
+                    {
+                        'id'          : 1,
+                        'title'       : 'course1',
+                        'sub_category': 'sub_category1',
+                        'user'        : 'user1',
+                        'like'        : 1,
+                        'price'       : '1.00',
+                        'thumbnail'   : 'null',
+                        'month'       : 1,
+                        'liked'       : False,
+                    },
+                    {
+                        'id'          : 2,
+                        'title'       : 'course2',
+                        'sub_category': 'sub_category2',
+                        'user'        : 'user1',
+                        'like'        : 0,
+                        'price'       : '1.00',
+                        'thumbnail'   : 'null',
+                        'month'       : 1,
+                        'liked'       : False,
+                    }],
+                'page_list': [1]
+        })
+
+    def test_pagination_invalid_value(self):
+        client = Client()
+        response = client.get('/courses?page=2')
+        self.assertEqual(response.status_code, 404)
+        self.assertEqual(response.json(), 
+            {'message' : 'INVALID_PAGE'}
+        )
