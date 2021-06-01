@@ -1,7 +1,7 @@
 import jwt
 import requests
-from datetime         import datetime
 
+from datetime         import datetime
 from django.http      import JsonResponse
 from django.views     import View
 

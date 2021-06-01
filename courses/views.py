@@ -1,8 +1,12 @@
-from django.http.response   import JsonResponse
-from django.views           import View
+from django.views          import View
+from django.http           import JsonResponse
+from django.db.models      import Count, Q
+from django.core.paginator import Paginator, EmptyPage
 
-from courses.models         import Course, Review, Category
-from users.models           import User, Like, Comment
+from my_settings    import SECRET_KEY, ALGORITHM
+from courses.utils  import get_user
+from courses.models import Course, Category, SubCategory, Review
+from users.models   import Like, Comment
 
 class CategoryView(View):
     def get(self, request):
@@ -13,7 +17,7 @@ class CategoryView(View):
                     'id'  : sub_category.id,
                     'name': sub_category.name
                     }for sub_category in category.sub_categorys.all()]
-             }for category in Category.objects.all()]
+             }for category in Category.objects.prefetch_related('sub_categorys').all()]
         return JsonResponse({'category': results}, status=200)
 
 class CourseDetailView(View):
@@ -47,3 +51,74 @@ class CourseDetailView(View):
             return JsonResponse({'status': "SUCCESS", 'data': {'course':course_info}}, status=200)
         except Course.DoesNotExist:
             return JsonResponse({"status": "COURSE_NOT_FOUND", "message": "존재하지 않는 클래스입니다."}, status=404)
+            
+class CourseListView(View):
+    def get(self, request):
+        keyword         = request.GET.get('keyword', None)
+        category_id     = request.GET.get('category', None)
+        sub_category_id = request.GET.get('sub_category', None)
+        user            = get_user(request)
+
+        # 카테고리 분류
+        if sub_category_id or category_id:
+            if SubCategory.objects.filter(id=sub_category_id).exists() or Category.objects.filter(id=category_id).exists():
+                course_list = Course.objects.select_related('sub_category','user').prefetch_related('liked_user').filter(
+                    Q(sub_category__id           = sub_category_id) |
+                    Q(sub_category__category__id = category_id))
+            else:
+                return JsonResponse({'message' : 'INVALID_VALUE'}, status=404)
+        else:
+            course_list = Course.objects.select_related('sub_category','user').prefetch_related('liked_user').all()
+        
+        # 검색 기능
+        if keyword:
+            course_list = Course.objects.filter(
+                Q(title__icontains = keyword) |
+                Q(sub_category__name__icontains = keyword) |
+                Q(sub_category__category__name__icontains = keyword) 
+            )
+
+        # 정렬
+        course_list = course_list.annotate(like_count = Count('liked_user'))
+        sort_name   = request.GET.get('sort', None)
+        if sort_name:
+            my_dict = {
+                'lastest'  : '-created_at',
+                'reviewest': '-review_count',
+                'likes'    : '-like_count'
+            }
+            if sort_name in my_dict.keys():
+                if sort_name == 'reviewest':
+                    course_list = course_list.annotate(review_count = Count('review')) 
+                course_list.order_by(my_dict[sort_name])
+            else:
+                return JsonResponse({'message' : 'INVALID_VALUE'}, status=404)
+        
+        # pagination
+        page      = request.GET.get('page', None)
+        page_list = []
+        if page:
+            PAGE_SIZE = 10
+            paginator = Paginator(course_list, PAGE_SIZE)
+            try:
+                list_by_page = paginator.page(page)
+            except EmptyPage:
+                return JsonResponse({'message' : 'INVALID_PAGE'}, status=404)
+            course_list = list_by_page.object_list
+            page_list   = [page for page in paginator.page_range]
+
+        results = [
+            {
+                'id'          : course.id,
+                'title'       : course.title,
+                'sub_category': course.sub_category.name,
+                'user'        : course.user.korean_name,
+                'like'        : course.like_count,
+                'price'       : int(course.price),
+                'thumbnail'   : course.thumbnail,
+                'month'       : course.month,
+                'liked'       : user in course.liked_user.all()
+            }
+        for course in course_list]
+        
+        return JsonResponse({'courses':results, 'page_list':page_list}, status=200)
