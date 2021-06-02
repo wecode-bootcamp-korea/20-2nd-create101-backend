@@ -55,16 +55,16 @@ class CourseDetailView(View):
 class CourseListView(View):
     def get(self, request):
         keyword         = request.GET.get('keyword', None)
-        category_id     = request.GET.get('category', None)
-        sub_category_id = request.GET.get('sub_category', None)
+        category_name     = request.GET.get('category', None)
+        sub_category_name = request.GET.get('sub_category', None)
         user            = get_user(request)
 
         # 카테고리 분류
-        if sub_category_id or category_id:
-            if SubCategory.objects.filter(id=sub_category_id).exists() or Category.objects.filter(id=category_id).exists():
+        if sub_category_name or category_name:
+            if SubCategory.objects.filter(name=sub_category_name).exists() or Category.objects.filter(name=category_name).exists():
                 course_list = Course.objects.select_related('sub_category','user').prefetch_related('liked_user').filter(
-                    Q(sub_category__id           = sub_category_id) |
-                    Q(sub_category__category__id = category_id))
+                    Q(sub_category__name           = sub_category_name) |
+                    Q(sub_category__category__name = category_name))
             else:
                 return JsonResponse({'message' : 'INVALID_VALUE'}, status=404)
         else:
@@ -90,7 +90,8 @@ class CourseListView(View):
             if sort_name in my_dict.keys():
                 if sort_name == 'reviewest':
                     course_list = course_list.annotate(review_count = Count('review')) 
-                course_list.order_by(my_dict[sort_name])
+                ordered_course_list = course_list.order_by(my_dict[sort_name])
+                course_list         = ordered_course_list
             else:
                 return JsonResponse({'message' : 'INVALID_VALUE'}, status=404)
         
