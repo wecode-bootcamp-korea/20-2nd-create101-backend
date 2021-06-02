@@ -110,11 +110,12 @@ class CourseDetailViewTest(TestCase):
                 "id"            : 1,
                 "name"          : "드로잉",
                 "price"         : "240000.00",
-                "thumbnail_url" : "abcd.jpg",
+                "thumbnail" : "abcd.jpg",
                 "subcategory"   : "미술",
                 "counts_like"   : 1,
                 "target"        : "초급자용",
                 "month"         : 6,
+                "liked"         : False,
                 "review"        : [{
                     'id'     : 1,
                     'text'   : "hihi",
@@ -182,12 +183,12 @@ class CourseListViewTest(TestCase):
             target       = Target.objects.get(id=1)
         )
         Review.objects.create(
-            course = Course.objects.get(id=1),
+            course = Course.objects.get(id=2),
             user   = User.objects.get(id=1),
             text   = 'review'
         )
         Like.objects.create(
-            course = Course.objects.get(id=1),
+            course = Course.objects.get(id=2),
             user   = User.objects.get(id=1)
         )
     
@@ -203,6 +204,7 @@ class CourseListViewTest(TestCase):
         client   = Client()
         response = client.get('/courses?category=category2')
         self.assertEqual(response.status_code, 200)
+        print(response.json())
         self.assertEqual(response.json(), {
             'courses': [
                     {
@@ -210,7 +212,7 @@ class CourseListViewTest(TestCase):
                         'title'       : 'course1',
                         'sub_category': 'sub_category1',
                         'user'        : 'user1',
-                        'like'        : 1,
+                        'like'        : 0,
                         'price'       : 1,
                         'thumbnail'   : 'null',
                         'month'       : 1,
@@ -221,7 +223,7 @@ class CourseListViewTest(TestCase):
                         'title'       : 'course2',
                         'sub_category': 'sub_category2',
                         'user'        : 'user1',
-                        'like'        : 0,
+                        'like'        : 1,
                         'price'       : 1,
                         'thumbnail'   : 'null',
                         'month'       : 1,
@@ -249,7 +251,7 @@ class CourseListViewTest(TestCase):
                         'title'       : 'course2',
                         'sub_category': 'sub_category2',
                         'user'        : 'user1',
-                        'like'        : 0,
+                        'like'        : 1,
                         'price'       : 1,
                         'thumbnail'   : 'null',
                         'month'       : 1,
@@ -273,9 +275,9 @@ class CourseListViewTest(TestCase):
         self.assertEqual(response.json(), {
             'courses': [
                     {
-                        'id'          : 1,
-                        'title'       : 'course1',
-                        'sub_category': 'sub_category1',
+                        'id'          : 2,
+                        'title'       : 'course2',
+                        'sub_category': 'sub_category2',
                         'user'        : 'user1',
                         'like'        : 1,
                         'price'       : 1,
@@ -284,9 +286,9 @@ class CourseListViewTest(TestCase):
                         'liked'       : False,
                     },
                     {
-                        'id'          : 2,
-                        'title'       : 'course2',
-                        'sub_category': 'sub_category2',
+                        'id'          : 1,
+                        'title'       : 'course1',
+                        'sub_category': 'sub_category1',
                         'user'        : 'user1',
                         'like'        : 0,
                         'price'       : 1,
@@ -317,7 +319,7 @@ class CourseListViewTest(TestCase):
                         'title'       : 'course1',
                         'sub_category': 'sub_category1',
                         'user'        : 'user1',
-                        'like'        : 1,
+                        'like'        : 0,
                         'price'       : 1,
                         'thumbnail'   : 'null',
                         'month'       : 1,
@@ -328,7 +330,7 @@ class CourseListViewTest(TestCase):
                         'title'       : 'course2',
                         'sub_category': 'sub_category2',
                         'user'        : 'user1',
-                        'like'        : 0,
+                        'like'        : 1,
                         'price'       : 1,
                         'thumbnail'   : 'null',
                         'month'       : 1,

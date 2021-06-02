@@ -23,6 +23,7 @@ class CategoryView(View):
 class CourseDetailView(View):
     def get(self, request, id):
         try:
+            user            = get_user(request)
             course          = Course.objects.get(id=id)
             course_like     = Like.objects.filter(course_id=id)
             course_review   = Review.objects.filter(course_id=id)
@@ -32,11 +33,12 @@ class CourseDetailView(View):
                 "id"            : course.id,
                 "name"          : course.title,
                 "price"         : course.price,
-                "thumbnail_url" : course.thumbnail,
+                "thumbnail" : str(course.thumbnail),
                 "subcategory"   : course.sub_category.name,
                 "counts_like"   : course_like.count(),
                 "target"        : course.target.name,
                 "month"         : course.month,
+                'liked'         : user in course.liked_user.all(),
                 "review"        : [{
                     'id'     : review.id,
                     'text'   : review.text,
@@ -54,10 +56,10 @@ class CourseDetailView(View):
             
 class CourseListView(View):
     def get(self, request):
-        keyword         = request.GET.get('keyword', None)
+        keyword           = request.GET.get('keyword', None)
         category_name     = request.GET.get('category', None)
         sub_category_name = request.GET.get('sub_category', None)
-        user            = get_user(request)
+        user              = get_user(request)
 
         # 카테고리 분류
         if sub_category_name or category_name:
@@ -72,7 +74,7 @@ class CourseListView(View):
         
         # 검색 기능
         if keyword:
-            course_list = Course.objects.filter(
+            course_list = Course.objects.select_related('sub_category', 'user').prefetch_related('liked_user').filter(
                 Q(title__icontains = keyword) |
                 Q(sub_category__name__icontains = keyword) |
                 Q(sub_category__category__name__icontains = keyword) 
@@ -89,8 +91,9 @@ class CourseListView(View):
             }
             if sort_name in my_dict.keys():
                 if sort_name == 'reviewest':
-                    course_list = course_list.annotate(review_count = Count('review')) 
-                course_list.order_by(my_dict[sort_name])
+                    course_list = course_list.annotate(review_count = Count('course_review')) 
+                ordered_course_list = course_list.order_by(my_dict[sort_name])
+                course_list         = ordered_course_list
             else:
                 return JsonResponse({'message' : 'INVALID_VALUE'}, status=404)
         
@@ -115,7 +118,7 @@ class CourseListView(View):
                 'user'        : course.user.korean_name,
                 'like'        : course.like_count,
                 'price'       : int(course.price),
-                'thumbnail'   : course.thumbnail,
+                'thumbnail'   : str(course.thumbnail),
                 'month'       : course.month,
                 'liked'       : user in course.liked_user.all()
             }
