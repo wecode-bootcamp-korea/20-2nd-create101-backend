@@ -5,7 +5,7 @@ class Course(models.Model):
     # 설명에 html 코드가 들어갑니다.
     description  = models.TextField()
     # 이미지는 한장만 사용됩니다.
-    thumbnail    = models.CharField(max_length=2000)
+    thumbnail    = models.FileField()
     price        = models.DecimalField(max_digits=10, decimal_places=2)
     title        = models.CharField(max_length=300)
     sub_category = models.ForeignKey('SubCategory', on_delete=models.CASCADE)
