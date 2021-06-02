@@ -201,7 +201,7 @@ class CourseListViewTest(TestCase):
 
     def test_list_by_category_success(self):
         client   = Client()
-        response = client.get('/courses?category=2')
+        response = client.get('/courses?category=category2')
         self.assertEqual(response.status_code, 200)
         self.assertEqual(response.json(), {
             'courses': [
@@ -211,7 +211,7 @@ class CourseListViewTest(TestCase):
                         'sub_category': 'sub_category1',
                         'user'        : 'user1',
                         'like'        : 1,
-                        'price'       : '1.00',
+                        'price'       : 1,
                         'thumbnail'   : 'null',
                         'month'       : 1,
                         'liked'       : False,
@@ -222,7 +222,7 @@ class CourseListViewTest(TestCase):
                         'sub_category': 'sub_category2',
                         'user'        : 'user1',
                         'like'        : 0,
-                        'price'       : '1.00',
+                        'price'       : 1,
                         'thumbnail'   : 'null',
                         'month'       : 1,
                         'liked'       : False,
@@ -232,7 +232,7 @@ class CourseListViewTest(TestCase):
 
     def test_list_by_category_invalid_value(self):
         client   = Client()
-        response = client.get('/courses?category=3')
+        response = client.get('/courses?category=category3')
         self.assertEqual(response.status_code, 404)
         self.assertEqual(response.json(), {
             'message' : 'INVALID_VALUE'
@@ -240,7 +240,7 @@ class CourseListViewTest(TestCase):
 
     def test_list_by_sub_category_success(self):
         client   = Client()
-        response = client.get('/courses?sub_category=2')
+        response = client.get('/courses?sub_category=sub_category2')
         self.assertEqual(response.status_code, 200)
         self.assertEqual(response.json(), {
             'courses': [
@@ -250,7 +250,7 @@ class CourseListViewTest(TestCase):
                         'sub_category': 'sub_category2',
                         'user'        : 'user1',
                         'like'        : 0,
-                        'price'       : '1.00',
+                        'price'       : 1,
                         'thumbnail'   : 'null',
                         'month'       : 1,
                         'liked'       : False,
@@ -260,7 +260,7 @@ class CourseListViewTest(TestCase):
 
     def test_list_by_sub_category_invalid_value(self):
         client   = Client()
-        response = client.get('/courses?sub_category=5')
+        response = client.get('/courses?sub_category=sub_category3')
         self.assertEqual(response.status_code, 404)
         self.assertEqual(response.json(), {
             'message' : 'INVALID_VALUE'
@@ -278,7 +278,7 @@ class CourseListViewTest(TestCase):
                         'sub_category': 'sub_category1',
                         'user'        : 'user1',
                         'like'        : 1,
-                        'price'       : '1.00',
+                        'price'       : 1,
                         'thumbnail'   : 'null',
                         'month'       : 1,
                         'liked'       : False,
@@ -289,7 +289,7 @@ class CourseListViewTest(TestCase):
                         'sub_category': 'sub_category2',
                         'user'        : 'user1',
                         'like'        : 0,
-                        'price'       : '1.00',
+                        'price'       : 1,
                         'thumbnail'   : 'null',
                         'month'       : 1,
                         'liked'       : False,
@@ -318,7 +318,7 @@ class CourseListViewTest(TestCase):
                         'sub_category': 'sub_category1',
                         'user'        : 'user1',
                         'like'        : 1,
-                        'price'       : '1.00',
+                        'price'       : 1,
                         'thumbnail'   : 'null',
                         'month'       : 1,
                         'liked'       : False,
@@ -329,7 +329,7 @@ class CourseListViewTest(TestCase):
                         'sub_category': 'sub_category2',
                         'user'        : 'user1',
                         'like'        : 0,
-                        'price'       : '1.00',
+                        'price'       : 1,
                         'thumbnail'   : 'null',
                         'month'       : 1,
                         'liked'       : False,
