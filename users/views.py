@@ -34,7 +34,7 @@ class KakaologinView(View):
                         }, 
                         SECRET_KEY, 
                         algorithm = ALGORITHM
-                        ).decode('UTF-8')
+                        )
 
             coupons    = Coupon.objects.filter(name__contains = "신규회원")
             if first_login:

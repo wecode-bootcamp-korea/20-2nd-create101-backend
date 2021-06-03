@@ -1,7 +1,10 @@
-from django.test     import TestCase, Client
+import json
 
-from courses.models  import Category, SubCategory, Course, Review, Target
-from users.models    import Like, Comment, User
+from django.test                    import TestCase, Client
+from django.core.files.uploadedfile import SimpleUploadedFile
+
+from courses.models                 import Category, SubCategory, Course, Review, Target
+from users.models                   import Like, Comment, User
 class CategoryTest(TestCase):
     def setUp(self):
         category = Category.objects.create(
@@ -110,7 +113,7 @@ class CourseDetailViewTest(TestCase):
                 "id"            : 1,
                 "name"          : "드로잉",
                 "price"         : "240000.00",
-                "thumbnail" : "abcd.jpg",
+                "thumbnail"     : "abcd.jpg",
                 "subcategory"   : "미술",
                 "counts_like"   : 1,
                 "target"        : "초급자용",
@@ -346,3 +349,51 @@ class CourseListViewTest(TestCase):
         self.assertEqual(response.json(), 
             {'message' : 'INVALID_PAGE'}
         )
+class CourseRegisterViewTest(TestCase):
+    def setUp(self):
+        User.objects.create(
+                id          = 1,
+                email       = "abc@naver.com",
+                korean_name = "철수",
+                password    = "12345678",
+                kakao_id    = 1
+            )
+
+    def tearDown(self):
+        User.objects.all().delete()
+
+    def test_course_register_view_post_success(self):
+        image = SimpleUploadedFile(name="test.png", content_type="image/png", content="")
+        image_url = image.name
+        client = Client()
+        course = {
+            'title': "드로잉수업2",
+            'price': 30000,
+            'thumbnail': image_url,
+            'month': 3,
+            'target': 1,
+            'sub_category': 1,
+            'user': 1
+        }
+        response = client.post('/courses/register', json.dumps(course), content_type='application/json')
+
+        self.assertEqual(response.status_code, 200)
+        self.assertEqual(response.json(), {"message": "SUCCESS"})
+
+    def test_course_register_view_invalid_keys(self):
+        image = SimpleUploadedFile(name="test.png", content_type="image/png", content="")
+        image_url = image.name
+        client = Client()
+        course = {
+            'title_name': "드로잉수업2",
+            'price': 30000,
+            'thumbnail': image_url,
+            'month': 3,
+            'target': 1,
+            'sub_category': 1,
+            'user': 1
+        }
+        response = client.post('/courses/register', json.dumps(course), content_type='application/json')
+
+        self.assertEqual(response.status_code, 400)
+        self.assertEqual(response.json(), {"message": "INVALID_KEYS"})

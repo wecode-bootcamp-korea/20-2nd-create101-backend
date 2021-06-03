@@ -1,5 +1,5 @@
 import jwt
-import datetime
+from datetime     import datetime
 
 from django.http  import JsonResponse
 

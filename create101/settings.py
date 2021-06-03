@@ -9,9 +9,8 @@ https://docs.djangoproject.com/en/3.2/topics/settings/
 For the full list of settings and their values, see
 https://docs.djangoproject.com/en/3.2/ref/settings/
 """
-
 from pathlib import Path
-from my_settings import SECRET_KEY, DATABASES
+from my_settings import SECRET_KEY, DATABASES, AWS_ACCESS_KEY_ID, AWS_SECRET_ACCESS_KEY
 
 LOGGING = {
     'disable_existing_loggers': False,
@@ -58,7 +57,8 @@ INSTALLED_APPS = [
     'django.contrib.staticfiles',
     'corsheaders',
     'users',
-    'courses'
+    'courses',
+    'storages'
 ]
 
 MIDDLEWARE = [
@@ -140,6 +140,11 @@ STATIC_URL = '/static/'
 # https://docs.djangoproject.com/en/3.2/ref/settings/#default-auto-field
 
 DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
+
+AWS_ACCESS_KEY_ID = AWS_ACCESS_KEY_ID
+AWS_SECRET_ACCESS_KEY = AWS_SECRET_ACCESS_KEY
+AWS_STORAGE_BUCKET_NAME = 'thumbnailofcourse'
+AWS_QUERYSTRING_AUTH = False
 
 #REMOVE_APPEND_SLASH_WARNING
 APPEND_SLASH = False
