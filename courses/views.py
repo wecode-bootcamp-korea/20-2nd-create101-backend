@@ -81,7 +81,7 @@ class CourseListView(View):
             )
 
         # 정렬
-        course_list = course_list.annotate(like_count = Count('liked_user'))
+        course_list = course_list.annotate(like_count = Count('liked_user'), review_count = Count('course_review'))
         sort_name   = request.GET.get('sort', None)
         if sort_name:
             my_dict = {
@@ -90,8 +90,6 @@ class CourseListView(View):
                 'likes'    : '-like_count'
             }
             if sort_name in my_dict.keys():
-                if sort_name == 'reviewest':
-                    course_list = course_list.annotate(review_count = Count('course_review')) 
                 ordered_course_list = course_list.order_by(my_dict[sort_name])
                 course_list         = ordered_course_list
             else:
