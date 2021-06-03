@@ -81,7 +81,7 @@ class CourseListView(View):
             )
 
         # 정렬
-        course_list = course_list.annotate(like_count = Count('liked_user'), review_count = Count('course_review'))
+        course_list = course_list.annotate(like_count = Count('liked_user', distinct=True), review_count = Count('course_review', distinct=True))
         sort_name   = request.GET.get('sort', None)
         if sort_name:
             my_dict = {
