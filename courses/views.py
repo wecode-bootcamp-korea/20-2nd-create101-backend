@@ -1,12 +1,17 @@
+import json, random, boto3
+from uuid                  import uuid4
+
 from django.views          import View
 from django.http           import JsonResponse
 from django.db.models      import Count, Q
 from django.core.paginator import Paginator, EmptyPage
 
-from my_settings    import SECRET_KEY, ALGORITHM
-from courses.utils  import get_user
-from courses.models import Course, Category, SubCategory, Review
-from users.models   import Like, Comment
+from create101.settings    import AWS_ACCESS_KEY_ID, AWS_SECRET_ACCESS_KEY
+from my_settings           import AWS_URL, SAMPLE_IMAGES
+from courses.models        import Category, Course, SubCategory, Review
+from users.models          import User, Like, Comment
+from courses.utils         import get_user
+from decorator             import validate_login
 
 class CategoryView(View):
     def get(self, request):
@@ -33,7 +38,7 @@ class CourseDetailView(View):
                 "id"            : course.id,
                 "name"          : course.title,
                 "price"         : course.price,
-                "thumbnail" : str(course.thumbnail),
+                "thumbnail"     : str(course.thumbnail),
                 "subcategory"   : course.sub_category.name,
                 "counts_like"   : course_like.count(),
                 "target"        : course.target.name,
@@ -81,7 +86,7 @@ class CourseListView(View):
             )
 
         # 정렬
-        course_list = course_list.annotate(like_count = Count('liked_user', distinct=True), review_count = Count('course_review', distinct=True))
+        course_list = course_list.annotate(like_count = Count('liked_user'))
         sort_name   = request.GET.get('sort', None)
         if sort_name:
             my_dict = {
@@ -90,6 +95,8 @@ class CourseListView(View):
                 'likes'    : '-like_count'
             }
             if sort_name in my_dict.keys():
+                if sort_name == 'reviewest':
+                    course_list = course_list.annotate(review_count = Count('course_review')) 
                 ordered_course_list = course_list.order_by(my_dict[sort_name])
                 course_list         = ordered_course_list
             else:
@@ -123,3 +130,38 @@ class CourseListView(View):
         for course in course_list]
         
         return JsonResponse({'courses':results, 'page_list':page_list}, status=200)
+class CourseRegisterView(View):
+    s3_client = boto3.client(
+        's3',
+        aws_access_key_id=AWS_ACCESS_KEY_ID,
+        aws_secret_access_key=AWS_SECRET_ACCESS_KEY
+    )
+    @validate_login
+    def post(self, request):
+        try:
+            image      = request.FILES['image']
+            my_uuid    = str(uuid4())
+            self.s3_client.upload_fileobj(
+                image,
+                "thumbnailofcourse",
+                my_uuid,
+                ExtraArgs={
+                    "ContentType": image.content_type
+                }
+            )
+            image_url = AWS_URL + my_uuid
+            data            = json.loads(request.POST['course'])
+            description_img = SAMPLE_IMAGES
+            Course.objects.create(
+                title           = data['title'],
+                price           = data['price'],
+                thumbnail       = image_url,
+                description     = random.choice(description_img),
+                month           = data['month'],
+                target_id       = data['target'],
+                sub_category_id = data['sub_category'],
+                user_id         = request.account.id
+            )
+            return JsonResponse({"message": "SUCCESS"}, status=200)
+        except KeyError:
+            return JsonResponse({"message": "INVALID_KEYS"}, status=400)

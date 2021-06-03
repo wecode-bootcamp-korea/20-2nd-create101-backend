@@ -5,6 +5,9 @@
 my_settings.py
 *.csv
 load_data.py
+.vscode/launch.json
+.vscode/settings.json
+
 ### Linux ###
 *~
 

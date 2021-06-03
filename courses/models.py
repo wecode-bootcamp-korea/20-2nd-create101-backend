@@ -1,4 +1,5 @@
-from django.db import models
+from django.db     import models
+
 
 class Course(models.Model):
     target       = models.ForeignKey('Target', on_delete=models.CASCADE)
